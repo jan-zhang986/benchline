@@ -81,6 +81,20 @@ A local SQLite file does not persist on Vercel serverless. If Turso is unset, th
 
 `npm run build` does not need paid API keys.
 
+### GitHub Actions (CLI deploy)
+
+Pushes to `main` (and manual **workflow_dispatch**) run [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml). The workflow uses the Vercel CLI only — no Vercel GitHub App. Application secrets (`TURSO_*`, API keys, and so on) stay in the Vercel project; do not copy them into GitHub.
+
+Add these **repository secrets** in GitHub (**Settings → Secrets and variables → Actions**):
+
+| Secret | Expected value |
+| --- | --- |
+| `VERCEL_TOKEN` | A Vercel account token with access to the team and project ([Vercel account tokens](https://vercel.com/account/tokens)). |
+| `VERCEL_ORG_ID` | `team_4nkNRgv9n8HvRXaLT72Y59gd` (team slug `benchline2`) |
+| `VERCEL_PROJECT_ID` | `prj_iyPZ03SU3mnWe66OxH0sOXa6IuoI` (project name `benchline`) |
+
+Production URL: [https://benchline-benchline2.vercel.app](https://benchline-benchline2.vercel.app).
+
 ### Origin and Vercel
 
 This project may be hosted on Origin. Vercel deploys from a Git connection it can read. If the canonical remote is Origin, connect the GitHub repository Vercel is allowed to import (an Origin mirror, if that is how the project is published) or deploy with the Vercel CLI from a checkout of this branch. Use the same environment variables in the Vercel project as in `.env.example`. Activating a Vercel project does not turn on billing inside Benchline.
