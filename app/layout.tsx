@@ -7,6 +7,8 @@ import { SITE_DESCRIPTION, SITE_NAME, getSiteUrl } from "@/lib/site";
 import "./globals.css";
 
 const adsenseClient = process.env.NEXT_PUBLIC_ADSENSE_CLIENT;
+const GOOGLE_SEARCH_CONSOLE_VERIFICATION =
+  "weBzA5mukjYvnB189DJljuDKWFwQw62nDJT5FSmL8ms";
 
 const sans = Source_Sans_3({
   subsets: ["latin"],
@@ -40,6 +42,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${sans.variable} ${serif.variable} h-full antialiased`}>
       <head>
+        <meta
+          name="google-site-verification"
+          content={GOOGLE_SEARCH_CONSOLE_VERIFICATION}
+        />
         {adsenseClient ? (
           <>
             <meta name="google-adsense-account" content={adsenseClient} />
