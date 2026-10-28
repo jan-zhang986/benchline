@@ -50,6 +50,22 @@ export function SiteFooter() {
           </ul>
         </div>
       </div>
+      <div className="mx-auto max-w-6xl border-t border-border px-4 py-6">
+        <a
+          href="https://theaitoolsdir.com/product/benchline?ref=badge"
+          rel="dofollow"
+          className="inline-block opacity-90 transition-opacity hover:opacity-100"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element -- external directory badge SVG */}
+          <img
+            src="https://theaitoolsdir.com/badge/benchline.svg"
+            alt="Featured on TheAIToolsDir"
+            width={182}
+            height={46}
+            className="h-[46px] w-[182px] max-w-full"
+          />
+        </a>
+      </div>
     </footer>
   );
 }
