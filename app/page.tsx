@@ -41,10 +41,20 @@ export default function Home({
       <JsonLd
         data={{
           "@context": "https://schema.org",
-          "@type": "WebSite",
-          name: "Benchline",
-          url: site,
-          description: SITE_DESCRIPTION,
+          "@graph": [
+            {
+              "@type": "Organization",
+              name: "Benchline",
+              url: site,
+              description: SITE_DESCRIPTION,
+            },
+            {
+              "@type": "WebSite",
+              name: "Benchline",
+              url: site,
+              description: SITE_DESCRIPTION,
+            },
+          ],
         }}
       />
       <section className="border-b border-border">
@@ -54,7 +64,8 @@ export default function Home({
               Free GEO checker
             </p>
             <h1 className="mt-3 max-w-xl text-4xl leading-[1.12] tracking-tight text-balance md:text-5xl">
-              See whether AI crawlers can cite your brand
+              Benchline is a free GEO citability checker — see whether AI crawlers can cite your
+              brand
             </h1>
             <p className="mt-4 max-w-xl text-lg leading-relaxed text-muted-foreground">
               Benchline is a horizontal check for any brand. It scores citability on your site, gives
