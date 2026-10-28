@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
 import { CheckerForm } from "@/components/checker-form";
@@ -6,6 +7,33 @@ import { WaitlistForm } from "@/components/waitlist-form";
 import { GUIDES } from "@/lib/guides";
 import { renderPromptPack } from "@/lib/prompt-pack";
 import { SITE_DESCRIPTION, getSiteUrl } from "@/lib/site";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
+
+const homeFaqs = [
+  {
+    question: "What is Benchline?",
+    answer:
+      "Benchline is a horizontal check for any brand. It scores citability on your site, gives you a prompt pack across the category, and grades an answer you paste in.",
+  },
+  {
+    question: "Does Benchline scrape ChatGPT or promise first place?",
+    answer:
+      "No. It does not scrape ChatGPT, and it will not promise you first place. Without an API key, Benchline skips engine calls and still returns the crawl, the prompt pack, and the paste scorer.",
+  },
+  {
+    question: "What does a Benchline report contain?",
+    answer:
+      "Readiness checks for robots rules, llms.txt, schema, and whether the title and H1 use the brand; a horizontal prompt pack of prompts a buyer might type; and a paste scorer that marks mention, position, list placement, and other names nearby in an answer you provide.",
+  },
+  {
+    question: "Is the 0–100 score my rank in AI answers?",
+    answer:
+      "No. The citability score is a proxy built from pages we can fetch. It is not a share of voice, not a traffic estimate, and not a guarantee that any model will name you, let alone name you first.",
+  },
+] as const;
 
 const samplePrompts = renderPromptPack("Northwind", "analytics").slice(0, 6);
 
@@ -55,6 +83,17 @@ export default function Home({
               description: SITE_DESCRIPTION,
             },
           ],
+        }}
+      />
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: homeFaqs.map((faq) => ({
+            "@type": "Question",
+            name: faq.question,
+            acceptedAnswer: { "@type": "Answer", text: faq.answer },
+          })),
         }}
       />
       <section className="border-b border-border">
@@ -165,6 +204,20 @@ export default function Home({
             </li>
           ))}
         </ul>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-4 pb-14" aria-labelledby="faq-heading">
+        <h2 id="faq-heading" className="text-3xl tracking-tight">
+          Questions
+        </h2>
+        <div className="mt-4 divide-y divide-border rounded-xl border border-border bg-card">
+          {homeFaqs.map((faq) => (
+            <details key={faq.question} className="group px-4 py-3">
+              <summary className="cursor-pointer font-medium">{faq.question}</summary>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{faq.answer}</p>
+            </details>
+          ))}
+        </div>
       </section>
 
       <section id="waitlist" className="border-t border-border">
