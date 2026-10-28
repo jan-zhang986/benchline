@@ -36,13 +36,6 @@ export function AdSlot({ placement }: { placement: "article" | "report" }) {
         data-ad-format="auto"
         data-full-width-responsive="true"
       />
-      <Script
-        id="adsense-lib"
-        async
-        src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(client)}`}
-        crossOrigin="anonymous"
-        strategy="afterInteractive"
-      />
       <Script id={`adsense-push-${placement}`} strategy="afterInteractive">
         {"(adsbygoogle = window.adsbygoogle || []).push({});"}
       </Script>
