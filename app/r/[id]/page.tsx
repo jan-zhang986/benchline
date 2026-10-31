@@ -13,13 +13,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!report) {
     return { title: "Report not found", robots: { index: false, follow: false } };
   }
-  const description = `Citability proxy ${report.score}/100 for ${report.brand}. On-site signals only. Not a ChatGPT rank.`;
+  const seoPart =
+    report.seoScore == null ? "SEO score not on this legacy report" : `SEO ${report.seoScore}/100`;
+  const description = `GEO ${report.score}/100 · ${seoPart} for ${report.brand}. Crawlable on-site signals only. Not a rank.`;
   return {
-    title: `${report.brand} GEO readiness report`,
+    title: `${report.brand} GEO + SEO readiness report`,
     description,
     alternates: { canonical: `/r/${report.id}` },
     openGraph: {
-      title: `${report.brand} GEO readiness report`,
+      title: `${report.brand} GEO + SEO readiness report`,
       description,
       url: `/r/${report.id}`,
     },

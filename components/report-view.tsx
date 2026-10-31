@@ -6,8 +6,9 @@ import { ShareBar } from "@/components/share-bar";
 import { TrustedSources } from "@/components/trusted-sources";
 import { Badge } from "@/components/ui/badge";
 import { WaitlistForm } from "@/components/waitlist-form";
-import { GROUP_LABEL, GROUP_ORDER, scoreBand } from "@/lib/readiness";
-import type { FindingStatus, ReportRecord } from "@/lib/types";
+import { GEO_GROUP_ORDER, GROUP_LABEL, scoreBand } from "@/lib/readiness";
+import { seoScoreBand } from "@/lib/seo-readiness";
+import type { Finding, FindingStatus, ReportRecord } from "@/lib/types";
 
 const STATUS_LABEL: Record<FindingStatus, string> = {
   pass: "Pass",
@@ -21,15 +22,41 @@ function statusVariant(status: FindingStatus): "default" | "destructive" | "outl
   return "outline";
 }
 
+function FindingList({ findings }: { findings: Finding[] }) {
+  return (
+    <ul className="mt-2 divide-y divide-border rounded-xl border border-border bg-card">
+      {findings.map((finding) => (
+        <li key={finding.id} className="grid gap-2 px-3 py-3 sm:grid-cols-[8rem_1fr_auto] sm:items-start">
+          <Badge variant={statusVariant(finding.status)}>{STATUS_LABEL[finding.status]}</Badge>
+          <div>
+            <p className="font-medium">{finding.label}</p>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{finding.detail}</p>
+          </div>
+          <p className="text-sm text-muted-foreground sm:text-right">
+            {finding.points}/{finding.maxPoints}
+          </p>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function ReportView({ report }: { report: ReportRecord }) {
-  const band = scoreBand(report.score);
+  const geoBand = scoreBand(report.score);
+  const seoBand = report.seoScore == null ? null : seoScoreBand(report.seoScore);
   const date = report.createdAt.slice(0, 10);
+  const geoFindings = report.findings.filter(
+    (finding) => finding.lane === "geo" || finding.lane === "both",
+  );
+  const seoFindings = report.findings.filter(
+    (finding) => finding.lane === "seo" || finding.lane === "both",
+  );
 
   return (
     <article className="mx-auto w-full max-w-4xl px-4 py-10">
       <p className="text-xs font-semibold tracking-[0.16em] text-primary uppercase">Public report</p>
       <h1 className="mt-2 font-heading text-4xl tracking-tight text-balance md:text-5xl">
-        {report.brand} citability report
+        {report.brand} readiness report
       </h1>
       <p className="mt-3 text-sm text-muted-foreground">
         <a href={report.finalUrl || report.website} className="underline underline-offset-4" rel="noreferrer">
@@ -39,26 +66,52 @@ export function ReportView({ report }: { report: ReportRecord }) {
       </p>
 
       <section className="mt-8 rounded-2xl border border-border bg-card p-5 md:p-6" aria-labelledby="score-heading">
-        <div className="flex flex-wrap items-end justify-between gap-4">
+        <h2 id="score-heading" className="sr-only">
+          Readiness scores
+        </h2>
+        <div className="grid gap-8 md:grid-cols-2">
           <div>
-            <p id="score-heading" className="text-sm font-medium text-muted-foreground">
-              Citability proxy
-            </p>
+            <p className="text-sm font-medium text-muted-foreground">GEO citability</p>
             <p className="font-heading text-6xl tracking-tight md:text-7xl">
               {report.score}
               <span className="text-3xl text-muted-foreground">/100</span>
             </p>
+            <p className="mt-3 text-sm leading-relaxed">
+              <span className="font-semibold">{geoBand.label}.</span> {geoBand.blurb}
+            </p>
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted" aria-hidden="true">
+              <div className="h-full rounded-full bg-primary" style={{ width: `${report.score}%` }} />
+            </div>
           </div>
-          <p className="max-w-sm text-sm leading-relaxed">
-            <span className="font-semibold">{band.label}.</span> {band.blurb}
-          </p>
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">SEO readiness</p>
+            {report.seoScore == null || !seoBand ? (
+              <div className="mt-3 rounded-xl border border-border bg-muted/50 px-4 py-3 text-sm leading-relaxed">
+                This report was saved before SEO scoring existed. Re-run the check to get a crawlable
+                SEO score alongside GEO. We do not invent a zero for older reports.
+              </div>
+            ) : (
+              <>
+                <p className="font-heading text-6xl tracking-tight md:text-7xl">
+                  {report.seoScore}
+                  <span className="text-3xl text-muted-foreground">/100</span>
+                </p>
+                <p className="mt-3 text-sm leading-relaxed">
+                  <span className="font-semibold">{seoBand.label}.</span> {seoBand.blurb}
+                </p>
+                <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted" aria-hidden="true">
+                  <div
+                    className="h-full rounded-full bg-primary"
+                    style={{ width: `${report.seoScore}%` }}
+                  />
+                </div>
+              </>
+            )}
+          </div>
         </div>
-        <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted" aria-hidden="true">
-          <div className="h-full rounded-full bg-primary" style={{ width: `${report.score}%` }} />
-        </div>
-        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
-          This score is the sum of on-site checks. It is not a ChatGPT, Perplexity, Gemini, or Claude
-          rank, and it is not a promise of first place.
+        <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+          Both scores are sums of on-site, crawlable checks. They are not ChatGPT, Perplexity,
+          Gemini, or Claude ranks, and they are not traffic or Core Web Vitals.
         </p>
         <div className="mt-4">
           <ShareBar path={`/r/${report.id}`} />
@@ -67,43 +120,50 @@ export function ReportView({ report }: { report: ReportRecord }) {
 
       <AdSlot placement="report" />
 
-      {!report.findings.some((finding) => finding.group === "onpage" && finding.status !== "unknown") ? (
+      {!geoFindings.some((finding) => finding.group === "onpage" && finding.status !== "unknown") ? (
         <p className="mb-6 rounded-xl border border-border bg-muted/60 px-4 py-3 text-sm leading-relaxed">
           The homepage could not be scored. Crawler and llms.txt checks above may still be filled in.
           The prompt pack and paste scorer work either way.
         </p>
       ) : null}
 
-      <section className="mt-2" aria-labelledby="checklist-heading">
-        <h2 id="checklist-heading" className="font-heading text-3xl tracking-tight">
-          Checklist
+      <section className="mt-2" aria-labelledby="geo-checklist-heading">
+        <h2 id="geo-checklist-heading" className="font-heading text-3xl tracking-tight">
+          GEO checklist
         </h2>
         <div className="mt-4 space-y-6">
-          {GROUP_ORDER.map((group) => (
-            <div key={group}>
-              <h3 className="text-sm font-semibold tracking-wide text-primary uppercase">
-                {GROUP_LABEL[group]}
-              </h3>
-              <ul className="mt-2 divide-y divide-border rounded-xl border border-border bg-card">
-                {report.findings
-                  .filter((finding) => finding.group === group)
-                  .map((finding) => (
-                    <li key={finding.id} className="grid gap-2 px-3 py-3 sm:grid-cols-[8rem_1fr_auto] sm:items-start">
-                      <Badge variant={statusVariant(finding.status)}>{STATUS_LABEL[finding.status]}</Badge>
-                      <div>
-                        <p className="font-medium">{finding.label}</p>
-                        <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{finding.detail}</p>
-                      </div>
-                      <p className="text-sm text-muted-foreground sm:text-right">
-                        {finding.points}/{finding.maxPoints}
-                      </p>
-                    </li>
-                  ))}
-              </ul>
-            </div>
-          ))}
+          {GEO_GROUP_ORDER.map((group) => {
+            const items = geoFindings.filter((finding) => finding.group === group);
+            if (items.length === 0) return null;
+            return (
+              <div key={group}>
+                <h3 className="text-sm font-semibold tracking-wide text-primary uppercase">
+                  {GROUP_LABEL[group]}
+                </h3>
+                <FindingList findings={items} />
+              </div>
+            );
+          })}
         </div>
       </section>
+
+      {seoFindings.length > 0 ? (
+        <section className="mt-12" aria-labelledby="seo-checklist-heading">
+          <h2 id="seo-checklist-heading" className="font-heading text-3xl tracking-tight">
+            SEO checklist
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+            Crawlable search basics only: Googlebot, Sitemap, indexability, title, meta, HTTPS,
+            canonical, schema, Open Graph, Twitter card, and html lang.
+          </p>
+          <div className="mt-4">
+            <h3 className="text-sm font-semibold tracking-wide text-primary uppercase">
+              {GROUP_LABEL.seo}
+            </h3>
+            <FindingList findings={seoFindings} />
+          </div>
+        </section>
+      ) : null}
 
       <section className="mt-12" aria-labelledby="fixes-heading">
         <h2 id="fixes-heading" className="font-heading text-3xl tracking-tight">
@@ -215,10 +275,10 @@ export function ReportView({ report }: { report: ReportRecord }) {
         </h2>
         <div className="mt-3 space-y-3 text-sm leading-relaxed text-muted-foreground">
           <p>
-            Free checks are limited on purpose. The number is a citability proxy: robots rules for
-            GPTBot, ClaudeBot, PerplexityBot, and Google-Extended, a /llms.txt file, Organization /
+            Free checks return two proxies. GEO covers AI crawler access, /llms.txt, Organization /
             WebSite / FAQ schema, and whether the title, H1, description, HTTPS, and canonical agree
-            with the brand.
+            with the brand. SEO covers Googlebot, Sitemap, indexability, title presence, meta,
+            HTTPS, canonical, schema.org or WebSite, Open Graph, Twitter card, and html lang.
           </p>
           <p>
             An API answer is not the consumer chat interface. Personalization, browsing, and memory

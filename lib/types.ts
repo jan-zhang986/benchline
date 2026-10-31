@@ -1,10 +1,14 @@
 export type FindingStatus = "pass" | "fail" | "unknown";
 
-export type FindingGroup = "crawlers" | "llms" | "schema" | "onpage";
+export type FindingGroup = "crawlers" | "llms" | "schema" | "onpage" | "seo";
+
+/** Which readiness score a finding contributes to. */
+export type FindingLane = "geo" | "seo" | "both";
 
 export type Finding = {
   id: string;
   group: FindingGroup;
+  lane: FindingLane;
   label: string;
   status: FindingStatus;
   points: number;
@@ -53,7 +57,10 @@ export type ReportRecord = {
   category: string | null;
   categoryUsed: string;
   categoryDefaulted: boolean;
+  /** GEO citability proxy /100. */
   score: number;
+  /** SEO crawlable readiness /100. Null on legacy reports created before dual scoring. */
+  seoScore: number | null;
   findings: Finding[];
   prompts: RenderedPrompt[];
   fixes: Fix[];

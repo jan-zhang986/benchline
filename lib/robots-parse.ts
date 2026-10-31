@@ -2,8 +2,20 @@ export type RobotRule = { type: "allow" | "disallow"; path: string };
 export type RobotGroup = { agents: string[]; rules: RobotRule[] };
 export type RobotAccess = "allowed" | "blocked" | "unspecified";
 
+export type ParsedRobots = {
+  groups: RobotGroup[];
+  /** Absolute or relative Sitemap URLs declared in robots.txt (order preserved, de-duped). */
+  sitemaps: string[];
+};
+
 export function parseRobots(text: string): RobotGroup[] {
+  return parseRobotsDocument(text).groups;
+}
+
+export function parseRobotsDocument(text: string): ParsedRobots {
   const groups: RobotGroup[] = [];
+  const sitemaps: string[] = [];
+  const seenSitemaps = new Set<string>();
   let current: RobotGroup | null = null;
 
   for (const rawLine of text.split(/\r?\n/)) {
@@ -29,10 +41,19 @@ export function parseRobots(text: string): RobotGroup[] {
         groups.push(current);
       }
       current.rules.push({ type: field, path: value });
+      continue;
+    }
+
+    if (field === "sitemap" && value) {
+      const key = value.toLowerCase();
+      if (!seenSitemaps.has(key)) {
+        seenSitemaps.add(key);
+        sitemaps.push(value);
+      }
     }
   }
 
-  return groups;
+  return { groups, sitemaps };
 }
 
 function ruleMatch(pattern: string, path: string): { match: boolean; specificity: number } {
