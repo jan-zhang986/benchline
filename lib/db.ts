@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS reports (
   category_used TEXT NOT NULL,
   category_defaulted INTEGER NOT NULL,
   score INTEGER NOT NULL,
+  seo_score INTEGER,
   findings_json TEXT NOT NULL,
   prompts_json TEXT NOT NULL,
   fixes_json TEXT NOT NULL,
@@ -47,6 +48,10 @@ CREATE TABLE IF NOT EXISTS live_quota (
 );
 `;
 
+const MIGRATIONS = [
+  `ALTER TABLE reports ADD COLUMN seo_score INTEGER`,
+];
+
 const globalForDb = globalThis as unknown as { benchline?: Client; benchlineReady?: Promise<void> };
 
 function databaseUrl(): string {
@@ -70,11 +75,25 @@ export function getDb(): Client {
   return globalForDb.benchline;
 }
 
+async function runMigrations(client: Client): Promise<void> {
+  for (const sql of MIGRATIONS) {
+    try {
+      await client.execute(sql);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      // Column already exists on fresh SCHEMA or previously migrated DB.
+      if (!/duplicate column|already exists/i.test(message)) throw error;
+    }
+  }
+}
+
 export function ensureDb(): Promise<void> {
   if (!globalForDb.benchlineReady) {
     globalForDb.benchlineReady = getDb()
       .executeMultiple(SCHEMA)
-      .then(() => undefined)
+      .then(async () => {
+        await runMigrations(getDb());
+      })
       .catch((error: unknown) => {
         globalForDb.benchlineReady = undefined;
         throw error;

@@ -26,12 +26,12 @@ const homeFaqs = [
   {
     question: "What does a Benchline report contain?",
     answer:
-      "Readiness checks for robots rules, llms.txt, schema, and whether the title and H1 use the brand; a horizontal prompt pack of prompts a buyer might type; and a paste scorer that marks mention, position, list placement, and other names nearby in an answer you provide.",
+      "Two readiness scores from crawlable checks: GEO (AI crawlers, llms.txt, schema, brand in title/H1) and SEO (Googlebot, Sitemap, indexability, title, meta, HTTPS, canonical, schema, Open Graph, Twitter card, html lang); a horizontal prompt pack; and a paste scorer for an answer you provide.",
   },
   {
     question: "Is the 0–100 score my rank in AI answers?",
     answer:
-      "No. The citability score is a proxy built from pages we can fetch. It is not a share of voice, not a traffic estimate, and not a guarantee that any model will name you, let alone name you first.",
+      "No. GEO and SEO scores are separate proxies built from pages we can fetch. They are not share of voice, not traffic, not Core Web Vitals, and not a guarantee that any model or search result will name you first.",
   },
 ] as const;
 
@@ -112,7 +112,7 @@ export default function Home({
               scrape ChatGPT, and it will not promise you first place.
             </p>
             <ul className="mt-6 space-y-2 text-sm leading-relaxed">
-              <li>Citability proxy from 0 to 100, built from pages we can actually fetch.</li>
+              <li>GEO citability and SEO readiness, each 0–100, from crawlable checks only.</li>
               <li>A lane of prompts: category demand, alternatives, brand, and evaluation.</li>
               <li>A paste scorer that runs in the browser, with no model call.</li>
             </ul>
@@ -128,8 +128,8 @@ export default function Home({
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           {[
             {
-              title: "Readiness, not a rank",
-              body: "Robots rules for GPTBot, ClaudeBot, PerplexityBot, and Google-Extended, plus llms.txt, schema, and whether the title and H1 use the brand.",
+              title: "GEO + SEO readiness, not a rank",
+              body: "GEO covers AI crawlers, llms.txt, schema, and brand in the title/H1. SEO covers Googlebot, Sitemap, indexability, and classic on-page markup. Both are crawlable checks only.",
             },
             {
               title: "A horizontal prompt pack",
@@ -163,8 +163,8 @@ export default function Home({
                 sees.
               </p>
               <p>
-                The score is a proxy. It is not a share of voice, not a traffic estimate, and not a
-                guarantee that any model will name you, let alone name you first.
+                The scores are proxies. They are not share of voice, not traffic, not Core Web
+                Vitals, and not a guarantee that any model or search result will name you first.
               </p>
             </div>
             <Link href="/methodology" className="mt-4 inline-block text-sm font-medium text-primary underline underline-offset-4">

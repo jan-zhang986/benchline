@@ -6,6 +6,7 @@ import { crawlSite } from "@/lib/crawl";
 import { DEFAULT_CATEGORY, renderPromptPack } from "@/lib/prompt-pack";
 import { consumeRateLimit, clientIpFromHeaders } from "@/lib/rate-limit";
 import { buildFindings, buildFixes, totalScore } from "@/lib/readiness";
+import { buildSeoFindings, totalSeoScore } from "@/lib/seo-readiness";
 import { maybeLiveChecks } from "@/lib/live-check";
 import { saveReport, saveWaitlist } from "@/lib/reports";
 import { assertPublicHttpUrl } from "@/lib/ssrf";
@@ -59,7 +60,7 @@ export async function createReport(
     if (!checked.ok) return { error: checked.error };
 
     const evidence = await crawlSite(checked.url);
-    const findings = buildFindings(brand, evidence);
+    const findings = [...buildFindings(brand, evidence), ...buildSeoFindings(evidence)];
     const prompts = renderPromptPack(brand, category);
     const live = await maybeLiveChecks({
       brand,
@@ -74,6 +75,7 @@ export async function createReport(
       categoryUsed: category ?? DEFAULT_CATEGORY,
       categoryDefaulted: category == null,
       score: totalScore(findings),
+      seoScore: totalSeoScore(findings),
       findings,
       prompts,
       fixes: buildFixes(findings),

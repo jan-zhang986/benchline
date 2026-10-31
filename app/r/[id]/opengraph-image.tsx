@@ -9,7 +9,8 @@ export default async function ReportImage({ params }: { params: Promise<{ id: st
   const { id } = await params;
   const report = await getReport(id);
   const brand = report?.brand ?? "Report";
-  const score = report ? String(report.score) : "–";
+  const geo = report ? String(report.score) : "–";
+  const seo = report?.seoScore == null ? "—" : String(report.seoScore);
 
   return new ImageResponse(
     (
@@ -28,13 +29,25 @@ export default async function ReportImage({ params }: { params: Promise<{ id: st
           BENCHLINE
         </div>
         <div style={{ display: "flex", marginTop: 28, fontSize: 68, lineHeight: 1.05 }}>{brand}</div>
-        <div style={{ display: "flex", marginTop: 12, fontSize: 30 }}>GEO citability proxy</div>
-        <div style={{ display: "flex", alignItems: "flex-end", marginTop: 36 }}>
-          <div style={{ display: "flex", fontSize: 120, lineHeight: 1 }}>{score}</div>
-          <div style={{ display: "flex", marginLeft: 12, marginBottom: 14, fontSize: 40 }}>/100</div>
+        <div style={{ display: "flex", marginTop: 12, fontSize: 30 }}>GEO + SEO readiness</div>
+        <div style={{ display: "flex", gap: 48, marginTop: 36 }}>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", fontSize: 24 }}>GEO</div>
+            <div style={{ display: "flex", alignItems: "flex-end" }}>
+              <div style={{ display: "flex", fontSize: 96, lineHeight: 1 }}>{geo}</div>
+              <div style={{ display: "flex", marginLeft: 8, marginBottom: 12, fontSize: 32 }}>/100</div>
+            </div>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <div style={{ display: "flex", fontSize: 24 }}>SEO</div>
+            <div style={{ display: "flex", alignItems: "flex-end" }}>
+              <div style={{ display: "flex", fontSize: 96, lineHeight: 1 }}>{seo}</div>
+              <div style={{ display: "flex", marginLeft: 8, marginBottom: 12, fontSize: 32 }}>/100</div>
+            </div>
+          </div>
         </div>
         <div style={{ display: "flex", marginTop: "auto", fontSize: 26 }}>
-          On-site signals only. Not a ChatGPT rank.
+          Crawlable on-site signals only. Not a rank.
         </div>
       </div>
     ),

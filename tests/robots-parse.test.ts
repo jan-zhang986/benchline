@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { accessFor, parseRobots } from "../lib/robots-parse.ts";
+import { accessFor, parseRobots, parseRobotsDocument } from "../lib/robots-parse.ts";
 
 test("specific GPTBot disallow beats a wildcard allow", () => {
   const groups = parseRobots(`
@@ -46,4 +46,20 @@ Disallow: /admin
 Allow: /
 `);
   assert.equal(accessFor(groups, "GPTBot", "/"), "allowed");
+});
+
+test("parses Sitemap directives without duplicating", () => {
+  const parsed = parseRobotsDocument(`
+User-agent: *
+Allow: /
+
+Sitemap: https://acme.example/sitemap.xml
+Sitemap: https://acme.example/sitemap.xml
+Sitemap: https://acme.example/news.xml
+`);
+  assert.deepEqual(parsed.sitemaps, [
+    "https://acme.example/sitemap.xml",
+    "https://acme.example/news.xml",
+  ]);
+  assert.equal(accessFor(parsed.groups, "Googlebot"), "allowed");
 });

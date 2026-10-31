@@ -9,8 +9,20 @@ export type FetchedPage = {
   url: string;
   body: string;
   contentType: string;
+  /** Lowercased header map for crawlable SEO signals (e.g. x-robots-tag). */
+  headers: Record<string, string>;
   error: string | null;
 };
+
+function pickHeaders(response: Response): Record<string, string> {
+  const wanted = ["content-type", "x-robots-tag", "robots"];
+  const out: Record<string, string> = {};
+  for (const name of wanted) {
+    const value = response.headers.get(name);
+    if (value) out[name] = value;
+  }
+  return out;
+}
 
 async function readLimited(response: Response, maxBytes: number): Promise<string> {
   const reader = response.body?.getReader();
@@ -50,6 +62,7 @@ export async function fetchPublic(
         url: current.toString(),
         body: "",
         contentType: "",
+        headers: {},
         error: checked.error,
       };
     }
@@ -76,6 +89,7 @@ export async function fetchPublic(
         url: current.toString(),
         body: "",
         contentType: "",
+        headers: {},
         error: timedOut ? "The request timed out." : "The host did not respond.",
       };
     }
@@ -90,6 +104,7 @@ export async function fetchPublic(
           url: current.toString(),
           body: "",
           contentType: "",
+          headers: pickHeaders(response),
           error: "A redirect had no destination.",
         };
       }
@@ -102,6 +117,7 @@ export async function fetchPublic(
           url: current.toString(),
           body: "",
           contentType: "",
+          headers: pickHeaders(response),
           error: "A redirect destination was invalid.",
         };
       }
@@ -116,6 +132,7 @@ export async function fetchPublic(
       url: current.toString(),
       body,
       contentType,
+      headers: pickHeaders(response),
       error: response.ok ? null : `HTTP ${response.status}`,
     };
   }
@@ -126,6 +143,7 @@ export async function fetchPublic(
     url: start.toString(),
     body: "",
     contentType: "",
+    headers: {},
     error: "Too many redirects.",
   };
 }

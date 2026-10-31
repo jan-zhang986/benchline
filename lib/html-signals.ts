@@ -37,20 +37,42 @@ export type PageSignals = {
   description: string;
   canonical: string;
   schemaTypes: string[];
+  htmlLang: string;
+  ogTitle: string;
+  ogDescription: string;
+  twitterCard: string;
+  /** Combined meta robots directives (lowercase, comma-separated tokens). */
+  metaRobots: string;
 };
+
+function metaContent($: ReturnType<typeof load>, selectors: string[]): string {
+  for (const selector of selectors) {
+    const value = $(selector).attr("content");
+    if (value?.trim()) return value.replace(/\s+/g, " ").trim();
+  }
+  return "";
+}
 
 export function parsePage(html: string): PageSignals {
   const $ = load(html);
   const title = $("title").first().text().replace(/\s+/g, " ").trim();
   const h1 = $("h1").first().text().replace(/\s+/g, " ").trim();
-  const description = (
-    $('meta[name="description" i]').attr("content") ||
-    $('meta[property="og:description" i]').attr("content") ||
-    ""
-  )
-    .replace(/\s+/g, " ")
-    .trim();
+  const description = metaContent($, [
+    'meta[name="description" i]',
+    'meta[property="og:description" i]',
+  ]);
   const canonical = ($('link[rel="canonical" i]').attr("href") || "").trim();
+  const htmlLang = ($("html").attr("lang") || "").trim();
+  const ogTitle = metaContent($, ['meta[property="og:title" i]']);
+  const ogDescription = metaContent($, ['meta[property="og:description" i]']);
+  const twitterCard = metaContent($, [
+    'meta[name="twitter:card" i]',
+    'meta[property="twitter:card" i]',
+  ]);
+  const metaRobots = metaContent($, [
+    'meta[name="robots" i]',
+    'meta[name="googlebot" i]',
+  ]).toLowerCase();
   const schemaTypes = new Set<string>();
 
   $('script[type="application/ld+json" i]').each((_, element) => {
@@ -74,7 +96,25 @@ export function parsePage(html: string): PageSignals {
     description,
     canonical,
     schemaTypes: [...schemaTypes],
+    htmlLang,
+    ogTitle,
+    ogDescription,
+    twitterCard,
+    metaRobots,
   };
+}
+
+/** True when robots / X-Robots-Tag tokens include noindex (or none). */
+export function hasNoindexDirective(...sources: string[]): boolean {
+  for (const source of sources) {
+    const tokens = source
+      .toLowerCase()
+      .split(/[,\s;]+/)
+      .map((token) => token.trim())
+      .filter(Boolean);
+    if (tokens.includes("noindex") || tokens.includes("none")) return true;
+  }
+  return false;
 }
 
 export function looksLikeHtml(body: string, contentType: string): boolean {

@@ -28,13 +28,21 @@ export type CrawlEvidence = {
   description: string;
   canonical: string;
   schemaTypes: string[];
+  htmlLang: string;
+  ogTitle: string;
+  ogDescription: string;
+  twitterCard: string;
+  metaRobots: string;
+  xRobotsTag: string;
   robotsState: "ok" | "missing" | "unknown";
   robotsDetail: string;
+  sitemaps: string[];
   bots: {
     gptbot: RobotAccess;
     claudebot: RobotAccess;
     perplexitybot: RobotAccess;
     googleExtended: RobotAccess;
+    googlebot: RobotAccess;
   };
   llmsState: "present" | "missing" | "html" | "unknown";
   llmsDetail: string;
@@ -85,6 +93,7 @@ function botFinding(input: {
     return {
       id,
       group: "crawlers",
+      lane: "geo",
       label,
       status: "unknown",
       points: 0,
@@ -97,6 +106,7 @@ function botFinding(input: {
     return {
       id,
       group: "crawlers",
+      lane: "geo",
       label,
       status: "fail",
       points: 0,
@@ -109,6 +119,7 @@ function botFinding(input: {
   return {
     id,
     group: "crawlers",
+    lane: "geo",
     label,
     status: "pass",
     points,
@@ -160,6 +171,7 @@ export function buildFindings(brand: string, evidence: CrawlEvidence): Finding[]
     findings.push({
       id: "llms",
       group: "llms",
+      lane: "geo",
       label: "llms.txt present",
       status: "pass",
       points: POINTS.llms,
@@ -171,6 +183,7 @@ export function buildFindings(brand: string, evidence: CrawlEvidence): Finding[]
     findings.push({
       id: "llms",
       group: "llms",
+      lane: "geo",
       label: "llms.txt present",
       status: "unknown",
       points: 0,
@@ -182,6 +195,7 @@ export function buildFindings(brand: string, evidence: CrawlEvidence): Finding[]
     findings.push({
       id: "llms",
       group: "llms",
+      lane: "geo",
       label: "llms.txt present",
       status: "fail",
       points: 0,
@@ -204,6 +218,7 @@ export function buildFindings(brand: string, evidence: CrawlEvidence): Finding[]
       return {
         id,
         group: "schema",
+        lane: "geo",
         label,
         status: "unknown",
         points: 0,
@@ -215,6 +230,7 @@ export function buildFindings(brand: string, evidence: CrawlEvidence): Finding[]
     return {
       id,
       group: "schema",
+      lane: "geo",
       label,
       status: present ? "pass" : "fail",
       points: present ? points : 0,
@@ -262,6 +278,7 @@ export function buildFindings(brand: string, evidence: CrawlEvidence): Finding[]
       return {
         id,
         group: "onpage",
+        lane: "geo",
         label,
         status: "unknown",
         points: 0,
@@ -273,6 +290,7 @@ export function buildFindings(brand: string, evidence: CrawlEvidence): Finding[]
     return {
       id,
       group: "onpage",
+      lane: "geo",
       label,
       status: ok ? "pass" : "fail",
       points: ok ? points : 0,
@@ -345,15 +363,18 @@ export function buildFindings(brand: string, evidence: CrawlEvidence): Finding[]
   return findings;
 }
 
+/** GEO citability score from geo/both findings only. */
 export function totalScore(findings: Finding[]): number {
-  return findings.reduce((sum, finding) => sum + finding.points, 0);
+  return findings
+    .filter((finding) => finding.lane === "geo" || finding.lane === "both")
+    .reduce((sum, finding) => sum + finding.points, 0);
 }
 
 export function buildFixes(findings: Finding[]): Fix[] {
   return findings
     .filter((finding) => finding.status !== "pass" && finding.fix)
     .sort((a, b) => b.maxPoints - a.maxPoints || a.label.localeCompare(b.label))
-    .slice(0, 6)
+    .slice(0, 8)
     .map((finding) => ({
       id: finding.id,
       title: finding.label,
@@ -389,6 +410,9 @@ export const GROUP_LABEL = {
   llms: "llms.txt",
   schema: "Structured data",
   onpage: "On-page brand signals",
+  seo: "SEO crawlable checks",
 } as const;
 
-export const GROUP_ORDER = ["crawlers", "llms", "schema", "onpage"] as const;
+export const GROUP_ORDER = ["crawlers", "llms", "schema", "onpage", "seo"] as const;
+export const GEO_GROUP_ORDER = ["crawlers", "llms", "schema", "onpage"] as const;
+export const SEO_GROUP_ORDER = ["seo"] as const;

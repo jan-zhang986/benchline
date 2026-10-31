@@ -28,7 +28,7 @@ const faqs = [
   {
     question: "Where does Benchline sit?",
     answer:
-      "It checks the on-site half: crawler access, llms.txt, schema, and brand consistency. It does not replace rank tracking, and it does not replace opening a chat product and reading the answer.",
+      "It returns two on-site proxies from the same crawl: GEO (AI crawlers, llms.txt, schema, brand consistency) and SEO (Googlebot, Sitemap, indexability, classic markup). It does not replace rank tracking, and it does not replace opening a chat product and reading the answer.",
   },
 ];
 
@@ -94,13 +94,16 @@ export default function Page() {
           </p>
           <h2>A practical split of labor</h2>
           <p>
-            Keep the SEO basics: one title, one H1, a canonical, and a description a human can
-            finish. Add the GEO basics: an explicit allow for the crawlers you want, a short
-            /llms.txt, and Organization plus WebSite schema that use the same name. Then write one
-            comparison page that names alternatives without hiding yours.
+            Keep the SEO basics Benchline scores separately: Googlebot allowed, a Sitemap line,
+            no noindex, a title, meta description, HTTPS, canonical, schema.org or WebSite, Open
+            Graph basics, a Twitter card, and html lang. Add the GEO basics: an explicit allow for
+            the AI crawlers you want, a short /llms.txt, and Organization plus WebSite schema that
+            use the same brand name in the title and H1. Then write one comparison page that names
+            alternatives without hiding yours.
           </p>
           <p>
-            Details on the crawler file live in{" "}
+            Point tables for both scores live on the{" "}
+            <Link href="/methodology">methodology</Link> page. Details on the crawler file live in{" "}
             <Link href="/ai-crawler-robots">robots.txt for AI crawlers</Link>. The file convention
             is covered in <Link href="/llms-txt">what llms.txt is</Link>.
           </p>

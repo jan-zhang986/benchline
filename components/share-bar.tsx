@@ -1,15 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { Button } from "@/components/ui/button";
+
+const subscribe = () => () => {};
+const getOrigin = () => window.location.origin;
+const getServerOrigin = () => "";
 
 export function ShareBar({ path }: { path: string }) {
   const [copied, setCopied] = useState(false);
-  const [shareUrl, setShareUrl] = useState(path);
-
-  useEffect(() => {
-    setShareUrl(`${window.location.origin}${path}`);
-  }, [path]);
+  const origin = useSyncExternalStore(subscribe, getOrigin, getServerOrigin);
+  const shareUrl = origin ? `${origin}${path}` : path;
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -21,8 +22,6 @@ export function ShareBar({ path }: { path: string }) {
         readOnly
         value={shareUrl}
         onFocus={(event) => {
-          const absolute = `${window.location.origin}${path}`;
-          setShareUrl(absolute);
           event.currentTarget.select();
         }}
         className="h-11 w-full rounded-lg border border-input bg-card px-3 text-sm"
@@ -33,7 +32,6 @@ export function ShareBar({ path }: { path: string }) {
         className="h-11 shrink-0 px-4"
         onClick={async () => {
           const absolute = `${window.location.origin}${path}`;
-          setShareUrl(absolute);
           try {
             await navigator.clipboard.writeText(absolute);
             setCopied(true);

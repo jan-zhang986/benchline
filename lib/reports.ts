@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { execute } from "@/lib/db";
-import type { Fix, Finding, LiveCheck, RenderedPrompt, ReportRecord } from "@/lib/types";
+import type { Fix, Finding, FindingLane, LiveCheck, RenderedPrompt, ReportRecord } from "@/lib/types";
 
 const ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789";
 
@@ -25,7 +25,21 @@ function parseJson<T>(value: unknown, fallback: T): T {
   }
 }
 
+function normalizeLane(value: unknown): FindingLane {
+  if (value === "seo" || value === "both" || value === "geo") return value;
+  return "geo";
+}
+
+function normalizeFindings(raw: Finding[]): Finding[] {
+  return raw.map((finding) => ({
+    ...finding,
+    lane: normalizeLane((finding as Finding & { lane?: unknown }).lane),
+    group: finding.group === "seo" ? "seo" : finding.group,
+  }));
+}
+
 function toReport(row: Record<string, unknown>): ReportRecord {
+  const seoRaw = row.seo_score;
   return {
     id: String(row.id ?? ""),
     brand: String(row.brand ?? ""),
@@ -35,7 +49,8 @@ function toReport(row: Record<string, unknown>): ReportRecord {
     categoryUsed: String(row.category_used ?? "software"),
     categoryDefaulted: Number(row.category_defaulted) === 1,
     score: Number(row.score ?? 0),
-    findings: parseJson<Finding[]>(row.findings_json, []),
+    seoScore: seoRaw == null ? null : Number(seoRaw),
+    findings: normalizeFindings(parseJson<Finding[]>(row.findings_json, [])),
     prompts: parseJson<RenderedPrompt[]>(row.prompts_json, []),
     fixes: parseJson<Fix[]>(row.fixes_json, []),
     live: parseJson<LiveCheck[]>(row.live_json, []),
@@ -53,8 +68,8 @@ export async function saveReport(
       await execute(
         `INSERT INTO reports (
           id, brand, website, final_url, category, category_used, category_defaulted,
-          score, findings_json, prompts_json, fixes_json, live_json, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          score, seo_score, findings_json, prompts_json, fixes_json, live_json, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           id,
           report.brand,
@@ -64,6 +79,7 @@ export async function saveReport(
           report.categoryUsed,
           report.categoryDefaulted ? 1 : 0,
           report.score,
+          report.seoScore,
           JSON.stringify(report.findings),
           JSON.stringify(report.prompts),
           JSON.stringify(report.fixes),

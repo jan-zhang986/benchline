@@ -7,11 +7,9 @@ It is not a multi-engine share-of-voice product. It does not scrape the ChatGPT,
 ## What a check actually does
 
 1. Fetches the homepage, `/robots.txt`, and `/llms.txt` (single pages, user-requested).
-2. Scores a citability proxy from 0 to 100:
-   - GPTBot, ClaudeBot, PerplexityBot, and Google-Extended are not blocked
-   - a plain-text `/llms.txt` exists
-   - Organization, WebSite, and FAQ schema
-   - title and H1 include the brand, plus meta description, HTTPS, and a canonical link
+2. Scores two crawlable proxies from 0 to 100 each:
+   - **GEO** — GPTBot, ClaudeBot, PerplexityBot, and Google-Extended are not blocked; plain-text `/llms.txt`; Organization, WebSite, and FAQ schema; title and H1 include the brand; meta description, HTTPS, and a canonical link
+   - **SEO** — Googlebot allowed; `Sitemap:` in robots.txt; no noindex; title present; meta description; HTTPS; canonical; schema.org or WebSite; Open Graph basics; Twitter card; html lang
 3. Renders a horizontal prompt pack (category, alternatives, brand, evaluation). Edit `lib/prompt-pack.ts`. Saved reports keep the prompts from check time.
 4. Offers a paste scorer in the browser. Nothing in that box is uploaded.
 5. Optionally calls one provider API if you configured a key. Otherwise that section says it was skipped.
@@ -20,7 +18,7 @@ Point values are on `/methodology`.
 
 ## Honest limits
 
-- The score is a proxy from pages we fetched. It is not a rank in any answer engine.
+- GEO and SEO scores are proxies from pages we fetched. They are not ranks, traffic, or Core Web Vitals.
 - Free checks do not query every engine. Live calls are optional, quota-capped, and cached for seven days.
 - An API reply is not the consumer ChatGPT (or Claude, Perplexity, or Gemini) interface. Models, browsing, memory, and location differ.
 - Benchline never promises a placement, including first place.

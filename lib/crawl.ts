@@ -1,24 +1,40 @@
 import { fetchPublic } from "@/lib/fetch-public";
 import { looksLikeHtml, parsePage } from "@/lib/html-signals";
 import type { CrawlEvidence } from "@/lib/readiness";
-import { accessFor, parseRobots } from "@/lib/robots-parse";
+import { accessFor, parseRobotsDocument } from "@/lib/robots-parse";
 
 const EMPTY_BOTS: CrawlEvidence["bots"] = {
   gptbot: "unspecified",
   claudebot: "unspecified",
   perplexitybot: "unspecified",
   googleExtended: "unspecified",
+  googlebot: "unspecified",
+};
+
+const EMPTY_PAGE_FIELDS = {
+  title: "",
+  h1: "",
+  description: "",
+  canonical: "",
+  schemaTypes: [] as string[],
+  htmlLang: "",
+  ogTitle: "",
+  ogDescription: "",
+  twitterCard: "",
+  metaRobots: "",
+  xRobotsTag: "",
 };
 
 function robotsFrom(page: Awaited<ReturnType<typeof fetchPublic>>): Pick<
   CrawlEvidence,
-  "robotsState" | "robotsDetail" | "bots"
+  "robotsState" | "robotsDetail" | "bots" | "sitemaps"
 > {
   if (!page.ok && page.status === 0) {
     return {
       robotsState: "unknown",
       robotsDetail: page.error ?? "Could not fetch /robots.txt.",
       bots: EMPTY_BOTS,
+      sitemaps: [],
     };
   }
   if (page.status === 404 || page.status === 410) {
@@ -26,6 +42,7 @@ function robotsFrom(page: Awaited<ReturnType<typeof fetchPublic>>): Pick<
       robotsState: "missing",
       robotsDetail: "No robots.txt file was found. Crawlers are allowed by default.",
       bots: EMPTY_BOTS,
+      sitemaps: [],
     };
   }
   if (!page.ok) {
@@ -33,6 +50,7 @@ function robotsFrom(page: Awaited<ReturnType<typeof fetchPublic>>): Pick<
       robotsState: "unknown",
       robotsDetail: page.error ?? "Could not fetch /robots.txt.",
       bots: EMPTY_BOTS,
+      sitemaps: [],
     };
   }
   if (looksLikeHtml(page.body, page.contentType)) {
@@ -41,17 +59,20 @@ function robotsFrom(page: Awaited<ReturnType<typeof fetchPublic>>): Pick<
       robotsDetail:
         "/robots.txt returned a web page, so there is no crawler policy. Crawlers are allowed by default.",
       bots: EMPTY_BOTS,
+      sitemaps: [],
     };
   }
-  const groups = parseRobots(page.body);
+  const parsed = parseRobotsDocument(page.body);
   return {
     robotsState: "ok",
     robotsDetail: `Read robots.txt from ${page.url}.`,
+    sitemaps: parsed.sitemaps,
     bots: {
-      gptbot: accessFor(groups, "gptbot"),
-      claudebot: accessFor(groups, "claudebot"),
-      perplexitybot: accessFor(groups, "perplexitybot"),
-      googleExtended: accessFor(groups, "google-extended"),
+      gptbot: accessFor(parsed.groups, "gptbot"),
+      claudebot: accessFor(parsed.groups, "claudebot"),
+      perplexitybot: accessFor(parsed.groups, "perplexitybot"),
+      googleExtended: accessFor(parsed.groups, "google-extended"),
+      googlebot: accessFor(parsed.groups, "googlebot"),
     },
   };
 }
@@ -119,6 +140,7 @@ export async function crawlSite(url: URL): Promise<CrawlEvidence> {
 
   const robotFields = robotsFrom(robots);
   const llmsFields = llmsFrom(llms);
+  const xRobotsTag = homepage.headers["x-robots-tag"] ?? "";
 
   if (!homepage.ok || !looksLikeHtml(homepage.body, homepage.contentType)) {
     const error = !homepage.ok
@@ -129,11 +151,8 @@ export async function crawlSite(url: URL): Promise<CrawlEvidence> {
       finalUrl: homepage.url || null,
       homepageOk: false,
       homepageError: error,
-      title: "",
-      h1: "",
-      description: "",
-      canonical: "",
-      schemaTypes: [],
+      ...EMPTY_PAGE_FIELDS,
+      xRobotsTag,
       ...robotFields,
       ...llmsFields,
     };
@@ -150,6 +169,12 @@ export async function crawlSite(url: URL): Promise<CrawlEvidence> {
     description: signals.description,
     canonical: signals.canonical,
     schemaTypes: signals.schemaTypes,
+    htmlLang: signals.htmlLang,
+    ogTitle: signals.ogTitle,
+    ogDescription: signals.ogDescription,
+    twitterCard: signals.twitterCard,
+    metaRobots: signals.metaRobots,
+    xRobotsTag,
     ...robotFields,
     ...llmsFields,
   };
