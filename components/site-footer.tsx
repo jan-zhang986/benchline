@@ -33,6 +33,16 @@ export function SiteFooter() {
               </Link>
             </li>
             <li>
+              <Link href="/about" className="text-foreground/80 underline-offset-4 hover:underline">
+                About
+              </Link>
+            </li>
+            <li>
+              <Link href="/contact" className="text-foreground/80 underline-offset-4 hover:underline">
+                Contact
+              </Link>
+            </li>
+            <li>
               <Link href="/privacy" className="text-foreground/80 underline-offset-4 hover:underline">
                 Privacy
               </Link>
